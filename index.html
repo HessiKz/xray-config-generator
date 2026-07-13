@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HessiKz · Xray Config Generator</title>
+  <meta name="description" content="Generates VLESS/Vmess Xray server+client configs with TLS, fallback, and reality options." />
+  <meta name="author" content="Hesam Kazemi (@HessiKz)" />
+  <meta property="og:title" content="Xray Config Generator · Hesam Kazemi" />
+  <meta property="og:description" content="Generates VLESS/Vmess Xray server+client configs with TLS, fallback, and reality options." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- Project manifest (shared across all 25 sites) -->
+  <script src="./manifest.js"></script>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="bg-grid"></div>
+  <div id="app"></div>
+
+  <!-- Shared engine + layout -->
+  <script src="./engine.js"></script>
+  <script src="./layout.js"></script>
+  <!-- Project-specific logic (defines window.VIEW) -->
+  <script src="./app.js"></script>
+  <script>
+    buildShell(window.MANIFEST.projects.find(p => p.id === "xray-config-generator"));
+  </script>
+</body>
+</html>
