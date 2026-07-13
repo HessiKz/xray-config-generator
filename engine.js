@@ -34,9 +34,21 @@
     rand(min, max) { return Math.random() * (max - min) + min; },
     fmt(n) { return Number(n).toLocaleString("en-US"); },
     img(seed, w, h, extra) {
+      // Self-contained abstract cover (inline SVG data URI) so the page never
+      // depends on an external image CDN. Seeded for variety per project.
+      let hsh = 0; for (let i = 0; i < seed.length; i++) hsh = (hsh * 31 + seed.charCodeAt(i)) >>> 0;
+      const a = hsh % 360, b = (hsh >> 3) % 360;
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="hsl(' + a + ',70%,55%)"/><stop offset="1" stop-color="hsl(' + b + ',65%,42%)"/></linearGradient></defs>' +
+        '<rect width="100%" height="100%" fill="url(#g)"/>' +
+        '<circle cx="' + (w * 0.7) + '" cy="' + (h * 0.35) + '" r="' + (h * 0.28) + '" fill="rgba(255,255,255,0.12)"/>' +
+        '<circle cx="' + (w * 0.25) + '" cy="' + (h * 0.78) + '" r="' + (h * 0.2) + '" fill="rgba(0,0,0,0.12)"/>' +
+        '<rect x="' + (w * 0.1) + '" y="' + (h * 0.55) + '" width="' + (w * 0.8) + '" height="' + (h * 0.04) + '" rx="6" fill="rgba(255,255,255,0.18)"/>' +
+        '</svg>';
+      const uri = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
       const im = E.h("img", Object.assign({
-        src: "https://picsum.photos/seed/" + seed + "/" + w + "/" + h,
-        alt: "", loading: "lazy", width: w, height: h
+        src: uri, alt: "", loading: "lazy", width: w, height: h, decoding: "async"
       }, extra || {}));
       return im;
     }
@@ -173,28 +185,16 @@
       .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
   };
 
-  /* ---- Reveal on scroll + GSAP entrance ---- */
+  /* ---- Reveal on scroll (IntersectionObserver, no external deps) ---- */
   E.reveal = function () {
     const io = new IntersectionObserver(es => {
       es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("show"); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     E.els(".reveal").forEach(n => io.observe(n));
-
-    if (reduce || !window.gsap) { E.els(".reveal").forEach(n => n.classList.add("show")); return; }
-    gsap.registerPlugin(ScrollTrigger);
-    E.els(".reveal").forEach((n, i) => {
-      gsap.from(n, {
-        opacity: 0, y: 26, duration: 0.8, delay: (i % 4) * 0.06,
-        ease: "power3.out", scrollTrigger: { trigger: n, start: "top 88%", once: true }
-      });
-    });
-    // staggered group children
-    E.els("[data-stagger]").forEach(group => {
-      gsap.from(group.children, {
-        opacity: 0, y: 24, duration: 0.6, stagger: 0.08, ease: "power3.out",
-        scrollTrigger: { trigger: group, start: "top 85%", once: true }
-      });
-    });
+    // Safety: if IntersectionObserver is unavailable, reveal everything.
+    if (!("IntersectionObserver" in window)) {
+      E.els(".reveal").forEach(n => n.classList.add("show"));
+    }
   };
 
   window.E = E;

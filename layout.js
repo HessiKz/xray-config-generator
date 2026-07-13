@@ -60,7 +60,7 @@
 
     // Hero variants
     const heroMedia = E.h("div", { class: "hero-media" },
-      E.img(d.seed + "-wide", 900, 640, { alt: "", fetchpriority: "high" }),
+      E.img(d.seed + "-wide", 900, 640, { alt: "" }),
       E.h("div", { class: "scrim" })
     );
     const heroInner = E.h("div", {},
@@ -75,11 +75,11 @@
     );
     let hero;
     if (d.hero === "split" || d.hero === "asym") {
-      hero = E.h("header", { class: "hero " + d.hero + " wrap reveal" }, heroInner, heroMedia);
+      hero = E.h("header", { class: "hero " + d.hero + " wrap" }, heroInner, heroMedia);
     } else if (d.hero === "editorial") {
-      hero = E.h("header", { class: "hero editorial wrap reveal" }, heroInner);
+      hero = E.h("header", { class: "hero editorial wrap" }, heroInner);
     } else {
-      hero = E.h("header", { class: "hero center wrap reveal" }, heroInner);
+      hero = E.h("header", { class: "hero center wrap" }, heroInner);
     }
 
     const overview = E.h("section", { id: "overview", class: "wrap reveal" },
@@ -141,6 +141,7 @@
     rb.innerHTML = E.highlight(runLines.join("\n")).replace(/\n/g, "<br>");
 
     if (typeof window.VIEW === "function") window.VIEW(E.el("#view"), meta, A, d);
+    document.documentElement.classList.add("js-reveal");
     E.reveal();
   }
 

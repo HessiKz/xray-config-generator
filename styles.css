@@ -286,9 +286,13 @@ label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface-2); border: 1px solid var(--border-strong); padding: 12px 18px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .3s ease, transform .3s ease; z-index: 100; backdrop-filter: blur(10px); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Reveal-on-scroll ------------------------------------------------------ */
-.reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s ease; }
-.reveal.show { opacity: 1; transform: none; }
+/* Reveal-on-scroll ------------------------------------------------------
+   Default state is VISIBLE. JS adds `.js-reveal` to <html> only when it is
+   ready to manage reveals, which flips elements to the hidden pre-state.
+   If JS fails to load, nothing is ever hidden, so content always shows. */
+.reveal { opacity: 1; transform: none; }
+html.js-reveal .reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s ease; }
+html.js-reveal .reveal.show { opacity: 1; transform: none; }
 
 /* Footer ---------------------------------------------------------------- */
 .footer { border-top: 1px solid var(--border); padding: 48px 0; margin-top: 40px; color: var(--muted); font-size: 14px; }
