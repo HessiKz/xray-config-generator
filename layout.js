@@ -1,5 +1,5 @@
 /* ============================================================================
-   HessiKz portfolio — themed layout builder.
+   HessiKz portfolio - themed layout builder.
    Applies a unique design identity per project, then runs window.VIEW().
    Author: Hesam Kazemi (@HessiKz)
    ========================================================================== */

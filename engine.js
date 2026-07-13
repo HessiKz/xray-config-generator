@@ -1,5 +1,5 @@
 /* ============================================================================
-   HessiKz portfolio — shared frontend engine (GSAP-powered, accessible).
+   HessiKz portfolio - shared frontend engine (GSAP-powered, accessible).
    Author: Hesam Kazemi (@HessiKz)
    ========================================================================== */
 (function () {

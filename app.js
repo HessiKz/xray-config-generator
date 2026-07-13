@@ -1,5 +1,5 @@
 /* ============================================================================
-   HessiKz portfolio — interactive views for all 25 projects.
+   HessiKz portfolio - interactive views for all 25 projects.
    Each view renders into the #view container and showcases the project's stack.
    Author: Hesam Kazemi (@HessiKz)
    ========================================================================== */
@@ -86,7 +86,7 @@ function view_agent_playground(root) {
     { cls: "ok", text: "✓ Planner built 3-step plan" },
     { cls: "ok", text: "✓ Tool Agent executed calculator(x3)" },
     { cls: "ok", text: "✓ Writer drafted answer (518 tokens)" },
-    { cls: "amber", text: "⟳ Critic: confidence 0.91 — approve" },
+    { cls: "amber", text: "⟳ Critic: confidence 0.91 - approve" },
     { cls: "prompt", text: "✅ Done in 1.07s · 4 agents · 0 errors" }
   ];
   E.terminal(traceBody, lines);
