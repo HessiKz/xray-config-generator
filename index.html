@@ -8,22 +8,21 @@
   <meta name="author" content="Hesam Kazemi (@HessiKz)" />
   <meta property="og:title" content="Xray Config Generator · Hesam Kazemi" />
   <meta property="og:description" content="Generates VLESS/Vmess Xray server+client configs with TLS, fallback, and reality options." />
+  <meta name="color-scheme" content="dark light" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="./styles.css" />
-  <!-- Project manifest (shared across all 25 sites) -->
   <script src="./manifest.js"></script>
+  <script src="./designs.js"></script>
 </head>
 <body>
-  <div class="bg-glow"></div>
-  <div class="bg-grid"></div>
   <div id="app"></div>
 
-  <!-- Shared engine + layout -->
   <script src="./engine.js"></script>
   <script src="./layout.js"></script>
-  <!-- Project-specific logic (defines window.VIEW) -->
   <script src="./app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script>
     buildShell(window.MANIFEST.projects.find(p => p.id === "xray-config-generator"));
   </script>

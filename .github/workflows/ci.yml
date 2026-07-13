@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
       - name: Validate site assets
         run: |
-          test -f index.html && test -f manifest.js && test -f app.js && test -f engine.js
+          test -f index.html && test -f manifest.js && test -f app.js && test -f engine.js && test -f designs.js
           node -e "global.window={};require('./manifest.js');console.log('manifest ok:',window.MANIFEST.projects.length,'projects')"
       - name: Build check (no-op for static site)
         run: echo "Static site is served from main branch root by GitHub Pages."

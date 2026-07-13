@@ -55,9 +55,10 @@ npx serve .
 ```
 xray-config-generator/
 ├── index.html          # App shell (relative paths → works on Pages)
-├── styles.css          # Shared design system
-├── engine.js           # DOM / chart / graph helpers
+├── styles.css          # Shared design system (per-project themed)
+├── engine.js           # DOM / chart / graph / GSAP helpers
 ├── manifest.js         # Project metadata
+├── designs.js          # Per-project design identity (accent, font, hero)
 ├── app.js              # Interactive demo (this project's VIEW)
 ├── .github/workflows/  # CI → GitHub Pages deploy
 └── LICENSE             # MIT · Hesam Kazemi
