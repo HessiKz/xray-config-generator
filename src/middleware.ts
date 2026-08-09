@@ -14,6 +14,9 @@ const PROTECTED_PREFIXES = [
   "/payments",
   "/energy",
   "/payroll",
+  "/amendments",
+  "/catalog",
+  "/reports",
 ];
 
 function secret() {
@@ -61,5 +64,8 @@ export const config = {
     "/payments/:path*",
     "/energy/:path*",
     "/payroll/:path*",
+    "/amendments/:path*",
+    "/catalog/:path*",
+    "/reports/:path*",
   ],
 };

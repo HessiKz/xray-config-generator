@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Btn } from "@/components/ui";
 
 type Group = {
   product: string;
@@ -50,13 +51,23 @@ export default function TradePage() {
             className="rounded-md border border-[var(--line)] bg-black/20 px-3 py-2"
           />
         </label>
-        <button
-          type="button"
-          onClick={() => load(day)}
-          className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-[#1a1710]"
-        >
-          بارگذاری
-        </button>
+        <Btn onClick={() => load(day)}>بارگذاری</Btn>
+        {day ? (
+          <>
+            <Btn
+              variant="line"
+              href={`/api/export/trade?day=${encodeURIComponent(day)}`}
+            >
+              دانلود Excel
+            </Btn>
+            <Btn
+              variant="line"
+              href={`/reports/print/trade?day=${encodeURIComponent(day)}`}
+            >
+              چاپ / PDF
+            </Btn>
+          </>
+        ) : null}
       </div>
       {error ? <p className="text-red-300">{error}</p> : null}
       {groups.length ? (

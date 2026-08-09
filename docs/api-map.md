@@ -9,6 +9,12 @@
 | GET | `/api/dashboard` | session | آمار CEO |
 | POST | `/api/sync/enekas` | ceo/admin یا CRON | همگام‌سازی خواندنی |
 | GET | `/api/reports/warehouse-daily?day=` | session | گزارش روزانه انبار |
+| GET | `/api/briefing?day=` | session | بریفینگ مدیرعامل |
+| GET | `/api/catalog` | session | کاتالوگ و alias |
+| GET | `/api/export/warehouse?day=` | session | Excel انبار |
+| GET | `/api/export/trade?day=` | session | Excel خرید/فروش |
+| GET | `/api/export/slaughterers` | session | Excel کشتارکن |
+| GET | `/api/export/briefing?day=` | session | Excel بریفینگ |
 | PUT | `/api/warehouse/counts` | warehouse/ceo/admin | ثبت مانده انبار |
 | GET | `/api/trade/daily?day=` | session | خرید/فروش طرف‌حسابی |
 | GET/POST/PATCH | `/api/coldroom` | session (+ceo match) | بچ/کسری/FEFO |

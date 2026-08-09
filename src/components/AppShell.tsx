@@ -9,6 +9,11 @@ const NAV = [
   { href: "/trade", label: "خرید/فروش" },
   { href: "/coldroom", label: "سردخانه" },
   { href: "/people", label: "کشتارکن" },
+  { href: "/payments", label: "پرداخت‌ها" },
+  { href: "/energy", label: "انرژی" },
+  { href: "/payroll", label: "حقوق" },
+  { href: "/amendments", label: "اصلاحیه" },
+  { href: "/catalog", label: "کاتالوگ" },
   { href: "/suggestions", label: "پیشنهادها" },
   { href: "/admin", label: "ادمین" },
 ];
@@ -17,10 +22,12 @@ export function AppShell({
   children,
   title,
   userName,
+  subtitle,
 }: {
   children: React.ReactNode;
   title: string;
   userName?: string;
+  subtitle?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -33,12 +40,15 @@ export function AppShell({
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 py-6 sm:px-8">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] pb-5">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] pb-5">
         <div>
           <p className="text-xs tracking-[0.25em] text-[var(--accent)]">
             FARIMAN OPS
           </p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{title}</h1>
+          {subtitle ? (
+            <p className="mt-1 text-sm text-[var(--muted)]">{subtitle}</p>
+          ) : null}
           {userName ? (
             <p className="mt-1 text-sm text-[var(--muted)]">{userName}</p>
           ) : null}
@@ -52,7 +62,7 @@ export function AppShell({
         </button>
       </header>
 
-      <nav className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      <nav className="mb-8 flex flex-wrap gap-x-4 gap-y-2 text-sm">
         {NAV.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);

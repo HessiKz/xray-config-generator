@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Btn } from "@/components/ui";
 
 type Line = {
   productId: string;
@@ -85,20 +86,26 @@ export default function WarehousePage() {
             className="rounded-md border border-[var(--line)] bg-black/20 px-3 py-2"
           />
         </label>
-        <button
-          type="button"
-          onClick={() => load(day)}
-          className="rounded-md border border-[var(--line)] px-3 py-2 text-sm"
-        >
+        <Btn variant="line" onClick={() => load(day)}>
           بارگذاری
-        </button>
-        <button
-          type="button"
-          onClick={saveCounts}
-          className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-[#1a1710]"
-        >
-          ذخیره مانده انبار
-        </button>
+        </Btn>
+        <Btn onClick={saveCounts}>ذخیره مانده انبار</Btn>
+        {day ? (
+          <>
+            <Btn
+              variant="line"
+              href={`/api/export/warehouse?day=${encodeURIComponent(day)}`}
+            >
+              دانلود Excel
+            </Btn>
+            <Btn
+              variant="line"
+              href={`/reports/print/warehouse?day=${encodeURIComponent(day)}`}
+            >
+              چاپ / PDF
+            </Btn>
+          </>
+        ) : null}
       </div>
       {days.length ? (
         <div className="mb-4 flex flex-wrap gap-2 text-xs text-[var(--muted)]">

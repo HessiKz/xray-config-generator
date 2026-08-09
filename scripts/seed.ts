@@ -95,6 +95,37 @@ async function main() {
     skipDuplicates: true,
   });
 
+  const payCount = await prisma.paymentObligation.count();
+  if (payCount === 0) {
+    await prisma.paymentObligation.createMany({
+      data: [
+        {
+          partnerCode: "01010002",
+          title: "پرداخت کارکرد هفته",
+          dueDate: "1405/05/18",
+          amount: 250000000,
+        },
+        {
+          partnerCode: "01010086",
+          title: "مانده تسویه",
+          dueDate: "1405/05/20",
+          amount: 120000000,
+        },
+      ],
+    });
+  }
+
+  const energyCount = await prisma.energyBill.count();
+  if (energyCount === 0) {
+    await prisma.energyBill.createMany({
+      data: [
+        { utility: "electricity", period: "1405-04", amount: 85000000, quantity: 12000 },
+        { utility: "gas", period: "1405-04", amount: 42000000, quantity: 8000 },
+        { utility: "water", period: "1405-04", amount: 9000000, quantity: 450 },
+      ],
+    });
+  }
+
   console.log("Seed complete");
   console.log("Users: ceo/ceo1234, warehouse/wh1234, admin/admin1234");
 }
