@@ -96,7 +96,7 @@ export default function WarehousePage() {
               variant="line"
               href={`/api/export/warehouse?day=${encodeURIComponent(day)}`}
             >
-              دانلود Excel
+              دانلود اکسل
             </Btn>
             <Btn
               variant="line"

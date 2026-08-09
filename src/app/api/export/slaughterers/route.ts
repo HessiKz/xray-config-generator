@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/server/auth";
 import { prisma } from "@/server/db";
-import { csvResponse } from "@/server/export/csv";
+import { xlsxResponse } from "@/server/export/xlsx";
 
 export const runtime = "nodejs";
 
@@ -43,8 +43,14 @@ export async function GET() {
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  return csvResponse("slaughterers.csv", [
-    ["کد", "نام", "مقدار کار", "مبلغ", "تعداد سند"],
-    ...ranked.map((r) => [r.code, r.title, r.count, r.amount, r.rows]),
+  return xlsxResponse("slaughterers.xlsx", [
+    {
+      name: "کشتارکن‌ها",
+      rows: [
+        ["کد", "نام", "مقدار کار", "مبلغ", "تعداد سند"],
+        ...ranked.map((r) => [r.code, r.title, r.count, r.amount, r.rows]),
+      ],
+      headerRow: 1,
+    },
   ]);
 }

@@ -11,10 +11,10 @@
 | GET | `/api/reports/warehouse-daily?day=` | session | گزارش روزانه انبار |
 | GET | `/api/briefing?day=` | session | بریفینگ مدیرعامل |
 | GET | `/api/catalog` | session | کاتالوگ و alias |
-| GET | `/api/export/warehouse?day=` | session | Excel انبار |
-| GET | `/api/export/trade?day=` | session | Excel خرید/فروش |
-| GET | `/api/export/slaughterers` | session | Excel کشتارکن |
-| GET | `/api/export/briefing?day=` | session | Excel بریفینگ |
+| GET | `/api/export/warehouse?day=` | session | فایل اکسل `.xlsx` انبار |
+| GET | `/api/export/trade?day=` | session | فایل اکسل `.xlsx` خرید/فروش |
+| GET | `/api/export/slaughterers` | session | فایل اکسل `.xlsx` کشتارکن |
+| GET | `/api/export/briefing?day=` | session | فایل اکسل `.xlsx` بریفینگ |
 | PUT | `/api/warehouse/counts` | warehouse/ceo/admin | ثبت مانده انبار |
 | GET | `/api/trade/daily?day=` | session | خرید/فروش طرف‌حسابی |
 | GET/POST/PATCH | `/api/coldroom` | session (+ceo match) | بچ/کسری/FEFO |

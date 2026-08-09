@@ -222,7 +222,7 @@ export default function DashboardPage() {
                 href={`/api/export/warehouse?day=${encodeURIComponent(d)}`}
                 variant="line"
               >
-                دانلود Excel
+                دانلود اکسل
               </Btn>
             }
           >
@@ -336,7 +336,7 @@ function ReportCard({
         </Btn>
         {excel ? (
           <Btn href={excel} variant="line">
-            Excel
+            اکسل
           </Btn>
         ) : null}
         {print ? (

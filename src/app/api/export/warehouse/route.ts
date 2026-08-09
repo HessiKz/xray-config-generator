@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/server/auth";
 import { buildWarehouseDailyReport } from "@/server/reports/warehouse-daily";
 import { latestBusinessDay } from "@/server/dates";
-import { csvResponse } from "@/server/export/csv";
+import { xlsxResponse } from "@/server/export/xlsx";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
   const day =
     req.nextUrl.searchParams.get("day") || (await latestBusinessDay());
   const report = await buildWarehouseDailyReport(day);
-  const rows: (string | number)[][] = [
+
+  const detailRows = [
     [
       "تاریخ",
       "بخش",
@@ -37,12 +38,19 @@ export async function GET(req: NextRequest) {
       l.warehouseBalance,
       l.variance,
     ]),
-    [],
-    ["خلاصه"],
+  ];
+
+  const summaryRows = [
+    ["عنوان", "مقدار"],
+    ["تاریخ", day],
     ["کشتارکن فعال", report.summary.activeSlaughterers],
     ["کار قصاب‌ها", report.summary.workCount],
     ["اسناد روز", report.summary.articleCount || 0],
   ];
+
   const safe = day.replaceAll("/", "-");
-  return csvResponse(`warehouse-${safe}.csv`, rows);
+  return xlsxResponse(`warehouse-${safe}.xlsx`, [
+    { name: "گزارش انبار", rows: detailRows, headerRow: 1 },
+    { name: "خلاصه", rows: summaryRows, headerRow: 1 },
+  ]);
 }

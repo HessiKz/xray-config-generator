@@ -4,7 +4,7 @@ import { prisma } from "@/server/db";
 import { normalizeProductText } from "@/server/catalog";
 import { latestBusinessDay } from "@/server/dates";
 import { articleQty } from "@/server/article-qty";
-import { csvResponse } from "@/server/export/csv";
+import { xlsxResponse } from "@/server/export/xlsx";
 
 export const runtime = "nodejs";
 
@@ -71,5 +71,7 @@ export async function GET(req: NextRequest) {
   }
 
   const safe = day.replaceAll("/", "-");
-  return csvResponse(`trade-${safe}.csv`, rows);
+  return xlsxResponse(`trade-${safe}.xlsx`, [
+    { name: "خرید و فروش", rows, headerRow: 1 },
+  ]);
 }

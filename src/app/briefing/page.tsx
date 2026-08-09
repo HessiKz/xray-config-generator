@@ -89,7 +89,7 @@ function BriefingInner() {
               variant="line"
               href={`/api/export/briefing?day=${encodeURIComponent(d)}`}
             >
-              دانلود Excel
+              دانلود اکسل
             </Btn>
             <Btn
               variant="line"

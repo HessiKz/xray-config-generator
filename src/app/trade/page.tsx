@@ -58,7 +58,7 @@ export default function TradePage() {
               variant="line"
               href={`/api/export/trade?day=${encodeURIComponent(day)}`}
             >
-              دانلود Excel
+              دانلود اکسل
             </Btn>
             <Btn
               variant="line"

@@ -50,7 +50,7 @@ export default function PeoplePage() {
       {error ? <p className="text-red-300">{error}</p> : null}
       <div className="mb-6 flex flex-wrap gap-2">
         <Btn href="/api/export/slaughterers" variant="line">
-          دانلود Excel کشتارکن‌ها
+          دانلود اکسل کشتارکن‌ها
         </Btn>
       </div>
 
