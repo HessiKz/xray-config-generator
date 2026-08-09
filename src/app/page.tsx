@@ -46,11 +46,14 @@ export default function Home() {
       </section>
 
       <footer className="mt-16 flex flex-wrap items-center gap-4 text-sm text-[var(--muted)]">
+        <a className="underline-offset-4 hover:underline" href="/login">
+          ورود به پنل
+        </a>
         <a className="underline-offset-4 hover:underline" href="/api/health">
           وضعیت سرویس
         </a>
         <span>هاست: Vercel</span>
-        <span>ربات: فعال پس از webhook</span>
+        <span>ربات تلگرام فعال</span>
       </footer>
     </main>
   );

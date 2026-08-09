@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildHelpText,
-  buildReportStubText,
-  buildStatusText,
   isAllowedTelegramUser,
   sendMessage,
 } from "@/lib/telegram";
+import {
+  answerTelegramQuestion,
+  buildLiveReportText,
+  buildLiveStatusText,
+} from "@/server/telegram-qa";
+import { prisma } from "@/server/db";
 
 export const runtime = "nodejs";
 
@@ -45,6 +49,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  try {
+    await prisma.telegramChat.upsert({
+      where: { chatId: String(message.chat.id) },
+      create: {
+        chatId: String(message.chat.id),
+        username: message.from?.username || null,
+      },
+      update: { username: message.from?.username || null },
+    });
+  } catch (err) {
+    console.error("telegram chat upsert", err);
+  }
+
   const text = message.text.trim();
   const command = text.split(/\s+/)[0]?.split("@")[0] ?? "";
 
@@ -52,17 +69,25 @@ export async function POST(req: NextRequest) {
     if (command === "/start" || command === "/help") {
       await sendMessage(message.chat.id, buildHelpText());
     } else if (command === "/status") {
-      await sendMessage(message.chat.id, buildStatusText());
+      await sendMessage(message.chat.id, await buildLiveStatusText());
     } else if (command === "/report") {
-      await sendMessage(message.chat.id, buildReportStubText());
+      const day = text.split(/\s+/)[1] || "1405/05/01";
+      await sendMessage(message.chat.id, await buildLiveReportText(day));
+    } else if (command.startsWith("/")) {
+      await sendMessage(message.chat.id, "دستور شناخته نشد. /help را بزنید.");
     } else {
-      await sendMessage(
-        message.chat.id,
-        "دستور شناخته نشد. /help را بزنید.",
-      );
+      await sendMessage(message.chat.id, await answerTelegramQuestion(text));
     }
   } catch (err) {
     console.error("telegram handler error", err);
+    try {
+      await sendMessage(
+        message.chat.id,
+        "خطا در پردازش. چند لحظه بعد دوباره تلاش کنید.",
+      );
+    } catch {
+      /* ignore */
+    }
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 

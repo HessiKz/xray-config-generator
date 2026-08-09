@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ceo
+  warehouse_manager
+  operator
+  admin
+}
+
+enum MatchStatus {
+  internal_only
+  matched_in_enekas
+  voided
+}
+
+enum SuggestionStatus {
+  pending
+  approved
+  rejected
+  expired
+}
+
+enum TradeSide {
+  buy
+  sell
+  both
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  auditEvents  AuditEvent[]
+  suggestions  AiSuggestion[] @relation("SuggestionActor")
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+model SyncState {
+  id           String   @id @default(cuid())
+  entity       String   @unique
+  lastSuccess  DateTime?
+  lastAttempt  DateTime?
+  lastError    String?
+  recordCount  Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model EnekasPartner {
+  id          String   @id
+  code        String   @unique
+  title       String
+  groupCode   String?
+  groupTitle  String?
+  typeTitle   String?
+  isActive    Boolean  @default(true)
+  level       String?
+  mobile      String?
+  raw         Json?
+  syncedAt    DateTime @default(now())
+
+  @@index([groupCode])
+  @@index([title])
+}
+
+model EnekasAccount {
+  id          String   @id
+  code        String   @unique
+  title       String
+  level       String?
+  type        String?
+  isActive    Boolean  @default(true)
+  raw         Json?
+  syncedAt    DateTime @default(now())
+}
+
+model EnekasArticle {
+  id             String   @id
+  invoiceId      String?
+  invoiceNumber  String?
+  invoiceDate    String?
+  invoiceType    String?
+  invoiceStatus  String?
+  accountCode    String?
+  accountTitle   String?
+  partnerId      String?
+  partnerCode    String?
+  partnerTitle   String?
+  description    String?
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+  count          Float?
+  branchTitle    String?
+  raw            Json?
+  syncedAt       DateTime @default(now())
+
+  @@index([invoiceDate])
+  @@index([partnerCode])
+  @@index([accountCode])
+  @@index([invoiceType])
+}
+
+model EnekasStore {
+  id         String   @id
+  code       String
+  title      String
+  branchTitle String?
+  storekeeper String?
+  raw        Json?
+  syncedAt   DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  unit        String   @default("عدد")
+  section     String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  aliases     ProductAlias[]
+  warehouseRows DailyWarehouseRow[]
+}
+
+model ProductAlias {
+  id         String    @id @default(cuid())
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sourceText String
+  side       TradeSide @default(both)
+  active     Boolean   @default(true)
+
+  @@unique([sourceText, side])
+  @@index([sourceText])
+}
+
+model AttendanceDay {
+  id          String   @id @default(cuid())
+  partnerCode String
+  day         String
+  present     Boolean  @default(true)
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@unique([partnerCode, day])
+}
+
+model PaymentObligation {
+  id          String   @id @default(cuid())
+  partnerCode String
+  title       String
+  dueDate     String
+  amount      Float
+  paid        Boolean  @default(false)
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([dueDate, paid])
+}
+
+model WarehouseCount {
+  id        String   @id @default(cuid())
+  day       String
+  productId String
+  quantity  Float
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([day, productId])
+}
+
+model DailyWarehouseRow {
+  id             String   @id @default(cuid())
+  day            String
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  opening        Float    @default(0)
+  purchase       Float    @default(0)
+  sale           Float    @default(0)
+  systemBalance  Float    @default(0)
+  warehouseBalance Float  @default(0)
+  variance       Float    @default(0)
+  note           String?
+  createdAt      DateTime @default(now())
+
+  @@unique([day, productId])
+  @@index([day])
+}
+
+model ColdroomLot {
+  id           String      @id @default(cuid())
+  storeCode    String
+  productTitle String
+  quantity     Float
+  enteredOn    String
+  expiresOn    String?
+  sourceType   String      @default("manual")
+  matchStatus  MatchStatus @default(internal_only)
+  matchedRef   String?
+  note         String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([storeCode, matchStatus])
+  @@index([expiresOn])
+}
+
+model ColdroomCheck {
+  id        String   @id @default(cuid())
+  storeCode String
+  checkedAt DateTime
+  ok        Boolean  @default(true)
+  note      String?
+  source    String   @default("import")
+  createdAt DateTime @default(now())
+
+  @@index([storeCode, checkedAt])
+}
+
+model EnergyBill {
+  id        String   @id @default(cuid())
+  utility   String
+  period    String
+  amount    Float
+  quantity  Float?
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model PayrollRun {
+  id        String   @id @default(cuid())
+  period    String
+  status    String   @default("draft")
+  note      String?
+  createdAt DateTime @default(now())
+  lines     PayrollRunLine[]
+}
+
+model PayrollRunLine {
+  id           String     @id @default(cuid())
+  runId        String
+  run          PayrollRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  personName   String
+  partnerCode  String?
+  gross        Float      @default(0)
+  loanDeduct   Float      @default(0)
+  imprestDeduct Float     @default(0)
+  net          Float      @default(0)
+}
+
+model DocAmendment {
+  id          String   @id @default(cuid())
+  day         String
+  invoiceType String?
+  ref         String?
+  summary     String
+  raw         Json?
+  createdAt   DateTime @default(now())
+
+  @@index([day])
+}
+
+model AiSuggestion {
+  id          String           @id @default(cuid())
+  title       String
+  reason      String
+  payload     Json?
+  status      SuggestionStatus @default(pending)
+  createdAt   DateTime         @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?            @relation("SuggestionActor", fields: [decidedById], references: [id])
+}
+
+model TelegramChat {
+  id        String   @id @default(cuid())
+  chatId    String   @unique
+  userId    String?
+  username  String?
+  linkedAt  DateTime @default(now())
+}
