@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/dashboard", label: "داشبورد" },
+  { href: "/briefing", label: "بریفینگ" },
   { href: "/warehouse", label: "انبار" },
   { href: "/trade", label: "خرید/فروش" },
   { href: "/coldroom", label: "سردخانه" },

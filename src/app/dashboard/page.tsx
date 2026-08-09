@@ -154,7 +154,11 @@ export default function DashboardPage() {
                 body="خلاصه خرید/فروش، انبار، کشتارکن و پیشنهادها"
                 excel={`/api/export/briefing?day=${encodeURIComponent(d)}`}
                 print={`/reports/print/briefing?day=${encodeURIComponent(d)}`}
-                open="/dashboard"
+                open={
+                  d
+                    ? `/briefing?day=${encodeURIComponent(d)}`
+                    : "/briefing"
+                }
               />
               <ReportCard
                 title="گزارش روزانه انبار"

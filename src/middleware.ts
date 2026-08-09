@@ -17,6 +17,7 @@ const PROTECTED_PREFIXES = [
   "/amendments",
   "/catalog",
   "/reports",
+  "/briefing",
 ];
 
 function secret() {
@@ -67,5 +68,6 @@ export const config = {
     "/amendments/:path*",
     "/catalog/:path*",
     "/reports/:path*",
+    "/briefing/:path*",
   ],
 };

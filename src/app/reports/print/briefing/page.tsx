@@ -30,15 +30,25 @@ function BriefPrintInner() {
     }[];
   } | null>(null);
 
+  const [error, setError] = useState("");
+
   useEffect(() => {
     const url = dayParam
       ? `/api/briefing?day=${encodeURIComponent(dayParam)}`
       : "/api/briefing";
     void fetch(url)
-      .then((r) => r.json())
-      .then((d) => setB(d.briefing));
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok || !d.briefing) {
+          setError("بارگذاری بریفینگ ناموفق بود");
+          return;
+        }
+        setB(d.briefing);
+      })
+      .catch(() => setError("خطای شبکه"));
   }, [dayParam]);
 
+  if (error) return <p className="p-8 text-red-600">{error}</p>;
   if (!b) return <p className="p-8">در حال آماده‌سازی…</p>;
 
   return (
