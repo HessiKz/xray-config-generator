@@ -66,30 +66,34 @@ export async function POST(req: NextRequest) {
   const command = text.split(/\s+/)[0]?.split("@")[0] ?? "";
 
   try {
+    let reply: string;
     if (command === "/start" || command === "/help") {
-      await sendMessage(message.chat.id, buildHelpText());
+      reply = buildHelpText();
     } else if (command === "/status") {
-      await sendMessage(message.chat.id, await buildLiveStatusText());
+      reply = await buildLiveStatusText();
     } else if (command === "/report") {
       const day = text.split(/\s+/)[1] || "1405/05/01";
-      await sendMessage(message.chat.id, await buildLiveReportText(day));
+      reply = await buildLiveReportText(day);
     } else if (command.startsWith("/")) {
-      await sendMessage(message.chat.id, "دستور شناخته نشد. /help را بزنید.");
+      reply = "دستور شناخته نشد. /help را بزنید.";
     } else {
-      await sendMessage(message.chat.id, await answerTelegramQuestion(text));
+      reply = await answerTelegramQuestion(text);
+    }
+    try {
+      await sendMessage(message.chat.id, reply);
+    } catch (sendErr) {
+      // Chat may be synthetic in tests; keep webhook 200 so Telegram does not retry storm.
+      console.error("telegram sendMessage error", sendErr);
+      return NextResponse.json({
+        ok: true,
+        delivered: false,
+        preview: reply.slice(0, 500),
+      });
     }
   } catch (err) {
     console.error("telegram handler error", err);
-    try {
-      await sendMessage(
-        message.chat.id,
-        "خطا در پردازش. چند لحظه بعد دوباره تلاش کنید.",
-      );
-    } catch {
-      /* ignore */
-    }
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, delivered: true });
 }
