@@ -59,7 +59,7 @@ export class EnekasClient {
     }
   }
 
-  private async request(path: string, init: RequestInit = {}) {
+  private async request(path: string, init: RequestInit = {}, attempt = 0): Promise<Response> {
     const headers = new Headers(init.headers || {});
     headers.set(
       "User-Agent",
@@ -77,6 +77,12 @@ export class EnekasClient {
       });
       this.absorbSetCookie(res);
       return res;
+    } catch (err) {
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+        return this.request(path, init, attempt + 1);
+      }
+      throw err;
     } finally {
       clearTimeout(timer);
     }
