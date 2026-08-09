@@ -9,6 +9,7 @@ import {
   buildLiveReportText,
   buildLiveStatusText,
 } from "@/server/telegram-qa";
+import { formatCeoBriefingHtml } from "@/server/briefing";
 import { prisma } from "@/server/db";
 
 export const runtime = "nodejs";
@@ -68,32 +69,36 @@ export async function POST(req: NextRequest) {
   try {
     let reply: string;
     if (command === "/start" || command === "/help") {
-      reply = buildHelpText();
+      reply = [
+        buildHelpText(),
+        "",
+        (await formatCeoBriefingHtml()).html,
+      ].join("\n");
+    } else if (command === "/brief") {
+      reply = (await formatCeoBriefingHtml()).html;
     } else if (command === "/status") {
       reply = await buildLiveStatusText();
     } else if (command === "/report") {
-      const day = text.split(/\s+/)[1] || "1405/05/01";
+      const day = text.split(/\s+/)[1];
       reply = await buildLiveReportText(day);
     } else if (command.startsWith("/")) {
-      reply = "دستور شناخته نشد. /help را بزنید.";
+      reply = "دستور شناخته نشد. /brief یا /help را بزنید.";
     } else {
       reply = await answerTelegramQuestion(text);
     }
     try {
       await sendMessage(message.chat.id, reply);
+      return NextResponse.json({ ok: true, delivered: true });
     } catch (sendErr) {
-      // Chat may be synthetic in tests; keep webhook 200 so Telegram does not retry storm.
       console.error("telegram sendMessage error", sendErr);
       return NextResponse.json({
         ok: true,
         delivered: false,
-        preview: reply.slice(0, 500),
+        preview: reply.slice(0, 800),
       });
     }
   } catch (err) {
     console.error("telegram handler error", err);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, delivered: true });
 }

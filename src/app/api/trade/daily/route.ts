@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { normalizeProductText } from "@/server/catalog";
+import { latestBusinessDay } from "@/server/dates";
+import { articleQty } from "@/server/article-qty";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ ok: false }, { status: 401 });
-  const day = req.nextUrl.searchParams.get("day");
+  const day = req.nextUrl.searchParams.get("day") || (await latestBusinessDay());
 
   const products = await prisma.product.findMany({
     where: { active: true },
@@ -17,7 +19,7 @@ export async function GET(req: NextRequest) {
   });
 
   const articles = await prisma.enekasArticle.findMany({
-    where: day ? { invoiceDate: day } : undefined,
+    where: { invoiceDate: day },
     take: 5000,
     orderBy: { invoiceDate: "desc" },
   });
@@ -30,14 +32,14 @@ export async function GET(req: NextRequest) {
       const blob = normalizeProductText(
         `${a.description || ""} ${a.accountTitle || ""}`,
       );
+      // prefer longer aliases by requiring at least one alias hit; exact product scoring is in warehouse
       return aliasTexts.some((t) => t && blob.includes(t));
     });
 
     const buys = matched.filter(
       (a) =>
         (a.invoiceType || "").includes("خرید") ||
-        (a.invoiceType || "").includes("رسید") ||
-        ((a.partnerCode || "").startsWith("0101") && (a.credit || 0) > 0),
+        (a.invoiceType || "").includes("رسید"),
     );
     const sells = matched.filter(
       (a) =>
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest) {
       rows.slice(0, 40).map((r) => ({
         partner: r.partnerTitle,
         partnerCode: r.partnerCode,
-        qty: r.count ?? 0,
+        qty: articleQty(r),
         amount: Math.max(r.debit, r.credit),
         description: r.description,
         invoiceType: r.invoiceType,
@@ -60,12 +62,12 @@ export async function GET(req: NextRequest) {
       product: product.title,
       buy: mapSide(buys),
       sell: mapSide(sells),
-      buyQty: buys.reduce((s, r) => s + (r.count || 0), 0),
-      sellQty: sells.reduce((s, r) => s + (r.count || 0), 0),
+      buyQty: buys.reduce((s, r) => s + articleQty(r), 0),
+      sellQty: sells.reduce((s, r) => s + articleQty(r), 0),
       buyAmount: buys.reduce((s, r) => s + Math.max(r.debit, r.credit), 0),
       sellAmount: sells.reduce((s, r) => s + Math.max(r.debit, r.credit), 0),
     };
-  });
+  }).filter((g) => g.buyQty || g.sellQty || g.buyAmount || g.sellAmount);
 
   return NextResponse.json({ ok: true, day, groups });
 }

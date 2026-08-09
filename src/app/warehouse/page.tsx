@@ -17,23 +17,31 @@ type Line = {
 };
 
 export default function WarehousePage() {
-  const [day, setDay] = useState("1405/05/01");
+  const [day, setDay] = useState("");
+  const [days, setDays] = useState<{ day: string; count: number }[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [summary, setSummary] = useState<{
     activeSlaughterers: number;
     workCount: number;
+    articleCount?: number;
   } | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [msg, setMsg] = useState("");
 
-  async function load() {
+  async function load(explicitDay?: string) {
     setMsg("");
-    const res = await fetch(`/api/reports/warehouse-daily?day=${encodeURIComponent(day)}`);
+    const q = explicitDay || day;
+    const url = q
+      ? `/api/reports/warehouse-daily?day=${encodeURIComponent(q)}`
+      : "/api/reports/warehouse-daily";
+    const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) {
       setMsg("خطا در بارگذاری گزارش");
       return;
     }
+    setDay(data.report.day);
+    setDays(data.days || []);
     setLines(data.report.lines);
     setSummary(data.report.summary);
     const map: Record<string, number> = {};
@@ -79,7 +87,7 @@ export default function WarehousePage() {
         </label>
         <button
           type="button"
-          onClick={load}
+          onClick={() => load(day)}
           className="rounded-md border border-[var(--line)] px-3 py-2 text-sm"
         >
           بارگذاری
@@ -92,11 +100,25 @@ export default function WarehousePage() {
           ذخیره مانده انبار
         </button>
       </div>
+      {days.length ? (
+        <div className="mb-4 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+          {days.map((d) => (
+            <button
+              key={d.day}
+              type="button"
+              onClick={() => load(d.day)}
+              className="underline-offset-2 hover:underline"
+            >
+              {d.day} ({d.count})
+            </button>
+          ))}
+        </div>
+      ) : null}
       {msg ? <p className="mb-4 text-sm text-[var(--accent)]">{msg}</p> : null}
       {summary ? (
         <p className="mb-4 text-sm text-[var(--muted)]">
           کشتارکن فعال: {summary.activeSlaughterers} — کار قصاب‌ها:{" "}
-          {summary.workCount}
+          {summary.workCount} — اسناد روز: {summary.articleCount ?? "—"}
         </p>
       ) : null}
 

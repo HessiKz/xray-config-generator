@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const results = await runEnekasSync({ articlesLimit: 500 });
+    const results = await runEnekasSync({ articlesLimit: 1000 });
     await audit({
       userId: session?.id,
       action: "enekas_sync",

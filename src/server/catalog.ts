@@ -99,7 +99,29 @@ export const SEED_PRODUCTS: {
     unit: "عدد",
     section: "کله",
     sortOrder: 70,
-    aliases: ["سیراب تکی", "سیراب", "سیراب وشیردان", "سیراب و شیردان"],
+    aliases: [
+      "سیراب تکی",
+      "سیراب و شیردان",
+      "سیراب وشیردان",
+      "سیراب شیردان",
+      "شیردان بره",
+    ],
+  },
+  {
+    slug: "trotters-lamb",
+    title: "پاچه بره",
+    unit: "عدد",
+    section: "کله",
+    sortOrder: 80,
+    aliases: ["پاچه بره", "پاچه"],
+  },
+  {
+    slug: "skin-lamb",
+    title: "پوست بره",
+    unit: "عدد",
+    section: "پوست",
+    sortOrder: 90,
+    aliases: ["پوست بره", "پوست میش", "پوست بز"],
   },
   {
     slug: "plastic-income",
@@ -107,7 +129,7 @@ export const SEED_PRODUCTS: {
     unit: "عدد",
     section: "جانبی",
     sortOrder: 200,
-    aliases: ["پلاستیک", "فروش پلاستیک"],
+    aliases: ["پلاستیک", "فروش پلاستیک", "درآمد حاصل از فروش پلاستیک"],
   },
   {
     slug: "transport-carcass",
@@ -116,5 +138,13 @@ export const SEED_PRODUCTS: {
     section: "جانبی",
     sortOrder: 210,
     aliases: ["حمل لاشه", "درآمد حمل", "هزینه ی حمل", "هزینه حمل"],
+  },
+  {
+    slug: "slaughter-service-sheep",
+    title: "خدمات کشتار گوسفندی",
+    unit: "رأس",
+    section: "خدمات",
+    sortOrder: 220,
+    aliases: ["خدمات کشتار گوسفندی", "کشتار بره", "خدمات کشتار"],
   },
 ];

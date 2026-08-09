@@ -1,8 +1,14 @@
+import { formatCeoBriefingHtml } from "@/server/briefing";
 import { prisma } from "@/server/db";
+import { daysWithActivity, latestBusinessDay } from "@/server/dates";
 import { buildWarehouseDailyReport } from "@/server/reports/warehouse-daily";
 
 function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function money(n: number) {
+  return Math.round(n).toLocaleString("fa-IR");
 }
 
 export async function buildLiveStatusText() {
@@ -10,11 +16,17 @@ export async function buildLiveStatusText() {
   const partners = await prisma.enekasPartner.count();
   const articles = await prisma.enekasArticle.count();
   const pending = await prisma.aiSuggestion.count({ where: { status: "pending" } });
+  const day = await latestBusinessDay();
+  const days = await daysWithActivity(5);
   const lines = [
     "<b>وضعیت سامانه عملیات فریمان</b>",
     `• طرف‌حساب mirror: ${partners}`,
     `• آرتیکل mirror: ${articles}`,
+    `• آخرین روز کاری داده‌دار: ${esc(day)}`,
     `• پیشنهاد در انتظار تأیید: ${pending}`,
+    "",
+    "<b>روزهای فعال اخیر</b>",
+    ...days.map((d) => `• ${esc(d.day)} — ${d.count} سند`),
     "",
     "<b>Sync</b>",
   ];
@@ -30,53 +42,60 @@ export async function buildLiveStatusText() {
   return lines.join("\n");
 }
 
-export async function buildLiveReportText(day = "1405/05/01") {
-  const report = await buildWarehouseDailyReport(day);
-  const top = report.lines
-    .filter((l) => Math.abs(l.variance) >= 0.01 || l.purchase > 0 || l.sale > 0)
-    .slice(0, 12);
-  const lines = [
-    `<b>گزارش روزانه انبار — ${esc(day)}</b>`,
-    `کشتارکن فعال: ${report.summary.activeSlaughterers}`,
-    `کار قصاب‌ها (211101 count): ${report.summary.workCount}`,
-    "",
-  ];
-  if (top.length === 0) {
-    lines.push("ردیفی با حرکت/مغایرت یافت نشد (ابتدا sync و شمارش انبار).");
-  } else {
-    for (const l of top) {
-      lines.push(
-        `• ${esc(l.productTitle)}: خرید ${l.purchase} / فروش ${l.sale} / سیستم ${l.systemBalance} / انبار ${l.warehouseBalance} / مغایرت <b>${l.variance}</b>`,
-      );
-    }
-  }
-  return lines.join("\n");
+export async function buildLiveReportText(day?: string) {
+  const { html } = await formatCeoBriefingHtml(day);
+  return html;
 }
 
 export async function answerTelegramQuestion(text: string) {
   const q = text.trim();
-  const lower = q.toLowerCase();
 
-  if (/وضعیت|status|سینک|sync/i.test(q) || lower === "وضعیت") {
+  if (/^\/?(start|help)$/i.test(q) || /راهنما|کمک/.test(q)) {
+    return [
+      "<b>سامانه عملیات فریمان</b>",
+      "دستورات:",
+      "/brief — بریفینگ مدیرعامل",
+      "/report — گزارش روز آخر داده‌دار",
+      "/status — وضعیت sync",
+      "",
+      "یا بپرسید: کشتارکن‌ها، انبار، فروش امروز، پلاستیک، سردخانه، پیشنهادها",
+    ].join("\n");
+  }
+
+  if (/بریف|brief|خلاصه|امروز|مدیرعامل/i.test(q) || q === "/brief") {
+    return (await formatCeoBriefingHtml()).html;
+  }
+  if (/وضعیت|status|سینک|sync/i.test(q)) {
     return buildLiveStatusText();
   }
-  if (/گزارش|انبار|مغایرت|report/i.test(q)) {
+  if (/گزارش|انبار|مغایرت|report/i.test(q) || q.startsWith("/report")) {
     const dayMatch = q.match(/(\d{4}\/\d{2}\/\d{2})/);
-    return buildLiveReportText(dayMatch?.[1] || "1405/05/01");
+    return buildLiveReportText(dayMatch?.[1]);
+  }
+  if (/فروش|خرید|پلاستیک|حمل/i.test(q)) {
+    const day = await latestBusinessDay();
+    const { briefing } = await formatCeoBriefingHtml(day);
+    return [
+      `<b>خلاصه مالی عملیاتی — ${esc(day)}</b>`,
+      `خرید: ${money(briefing.summary.buyAmount)} ریال`,
+      `فروش: ${money(briefing.summary.sellAmount)} ریال`,
+      `پلاستیک: ${money(briefing.summary.plasticIncome)} ریال`,
+      `حمل: ${money(briefing.summary.transportIncome)} ریال`,
+      `اسناد روز: ${briefing.summary.articleRowsThatDay}`,
+    ].join("\n");
   }
   if (/کشتارکن|قصاب/i.test(q)) {
-    const count = await prisma.enekasPartner.count({
-      where: { groupCode: "0101", isActive: true },
-    });
-    const top = await prisma.enekasPartner.findMany({
-      where: { groupCode: "0101", isActive: true },
-      take: 8,
-      orderBy: { title: "asc" },
-    });
+    const { briefing } = await formatCeoBriefingHtml();
+    if (!briefing.topSlaughterers.length) {
+      return "هنوز عملکرد کشتارکن از اسناد mirror استخراج نشده. /status را بزنید.";
+    }
     return [
-      `<b>کشتارکن‌ها</b>`,
-      `فعال: ${count}`,
-      ...top.map((p) => `• ${esc(p.code)} — ${esc(p.title)}`),
+      `<b>برترین کشتارکن‌ها</b>`,
+      `کشتارکن فعال کل: ${briefing.summary.slaughterersActive}`,
+      ...briefing.topSlaughterers.map(
+        (p) =>
+          `• ${esc(p.title)} (${esc(p.code)}): ${p.count} / ${money(p.amount)}`,
+      ),
     ].join("\n");
   }
   if (/سردخانه|کسری|ففو|fefo/i.test(q)) {
@@ -89,10 +108,12 @@ export async function answerTelegramQuestion(text: string) {
     return [
       "<b>سردخانه — کسری داخلی</b>",
       `بچ internal_only: ${lots.length} (مقدار ${qty})`,
-      ...lots.map(
-        (l) =>
-          `• ${esc(l.productTitle)} ${l.quantity} — انقضا ${esc(l.expiresOn || "—")}`,
-      ),
+      ...(lots.length
+        ? lots.map(
+            (l) =>
+              `• ${esc(l.productTitle)} ${l.quantity} — انقضا ${esc(l.expiresOn || "—")}`,
+          )
+        : ["• کسری داخلی باز ندارید"]),
     ].join("\n");
   }
   if (/پیشنهاد|ai|هوش/i.test(q)) {
@@ -104,17 +125,22 @@ export async function answerTelegramQuestion(text: string) {
     if (!items.length) return "پیشنهاد در انتظاری نیست.";
     return [
       "<b>پیشنهادهای در انتظار تأیید</b>",
-      ...items.map((i) => `• ${esc(i.title)}`),
+      ...items.map((i) => `• ${esc(i.title)}\n  <i>${esc(i.reason.slice(0, 120))}</i>`),
     ].join("\n");
   }
 
+  // default: give briefing instead of useless help loop
+  const day = await latestBusinessDay();
+  const report = await buildWarehouseDailyReport(day);
+  const nz = report.lines.filter((l) => l.purchase || l.sale).length;
   return [
-    "سؤال را متوجه نشدم. می‌توانید بپرسید:",
-    "• وضعیت / sync",
-    "• گزارش انبار 1405/05/01",
-    "• کشتارکن‌ها",
-    "• سردخانه / کسری",
-    "• پیشنهادها",
-    "یا دستور /help",
-  ].join("\n");
+    "بریفینگ سریع:",
+    (await formatCeoBriefingHtml(day)).html,
+    "",
+    nz
+      ? ""
+      : "اگر جزئیات کم است، در پنل دکمه «اجرای sync» را بزنید یا بگویید: بریفینگ",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

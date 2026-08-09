@@ -30,10 +30,13 @@ export async function telegramCall<T>(
 }
 
 export async function sendMessage(chatId: number | string, text: string) {
+  // Telegram hard limit ~4096; keep replies usable
+  const clipped = text.length > 3900 ? `${text.slice(0, 3900)}\n…` : text;
   return telegramCall("sendMessage", {
     chat_id: chatId,
-    text,
+    text: clipped,
     parse_mode: "HTML",
+    disable_web_page_preview: true,
   });
 }
 
@@ -53,12 +56,11 @@ export function buildHelpText(): string {
     "<b>سامانه عملیات فریمان</b>",
     "",
     "دستورات:",
-    "/start — شروع",
+    "/brief — بریفینگ مدیرعامل با عدد واقعی",
+    "/report — گزارش انبار روز آخر داده‌دار",
+    "/status — وضعیت sync انعکاس",
     "/help — راهنما",
-    "/status — وضعیت sync و آمار",
-    "/report — گزارش روزانه انبار",
     "",
-    "سؤال آزاد هم می‌توانید بفرستید:",
-    "کشتارکن‌ها، سردخانه، پیشنهادها، مغایرت انبار",
+    "سؤال آزاد: کشتارکن‌ها، فروش، پلاستیک، سردخانه، پیشنهادها",
   ].join("\n");
 }

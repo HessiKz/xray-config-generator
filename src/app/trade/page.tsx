@@ -14,18 +14,23 @@ type Group = {
 };
 
 export default function TradePage() {
-  const [day, setDay] = useState("1405/05/01");
+  const [day, setDay] = useState("");
   const [groups, setGroups] = useState<Group[]>([]);
   const [error, setError] = useState("");
 
-  async function load() {
+  async function load(explicitDay?: string) {
     setError("");
-    const res = await fetch(`/api/trade/daily?day=${encodeURIComponent(day)}`);
+    const q = explicitDay || day;
+    const url = q
+      ? `/api/trade/daily?day=${encodeURIComponent(q)}`
+      : "/api/trade/daily";
+    const res = await fetch(url);
     const json = await res.json();
     if (!res.ok) {
       setError("خطا در بارگذاری");
       return;
     }
+    setDay(json.day || q);
     setGroups(json.groups || []);
   }
 
@@ -47,7 +52,7 @@ export default function TradePage() {
         </label>
         <button
           type="button"
-          onClick={load}
+          onClick={() => load(day)}
           className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-[#1a1710]"
         >
           بارگذاری

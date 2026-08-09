@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 
 type Dash = {
   user: { name: string; role: string };
+  latestDay: string;
   stats: {
     partners: number;
     slaughterers: number;
@@ -13,6 +14,26 @@ type Dash = {
     pendingSuggestions: number;
     coldInternalLots: number;
     overduePayments: number;
+    sellAmount: number;
+    buyAmount: number;
+    plasticIncome: number;
+  };
+  briefing: {
+    day: string;
+    warehouseMovements: {
+      product: string;
+      purchase: number;
+      sale: number;
+      variance: number;
+    }[];
+    topSlaughterers: {
+      title: string;
+      code: string;
+      count: number;
+      amount: number;
+    }[];
+    pendingSuggestions: { title: string; reason: string }[];
+    activityDays: { day: string; count: number }[];
   };
   syncStates: {
     entity: string;
@@ -21,6 +42,10 @@ type Dash = {
     lastError: string | null;
   }[];
 };
+
+function money(n: number) {
+  return Math.round(n || 0).toLocaleString("fa-IR");
+}
 
 export default function DashboardPage() {
   const [data, setData] = useState<Dash | null>(null);
@@ -42,11 +67,11 @@ export default function DashboardPage() {
 
   async function runSync() {
     setSyncing(true);
+    setError("");
     try {
       const res = await fetch("/api/sync/enekas", { method: "POST" });
-      if (!res.ok) {
-        setError("Sync ناموفق");
-      }
+      const json = await res.json();
+      if (!res.ok) setError(json.error || "Sync ناموفق");
       await load();
     } finally {
       setSyncing(false);
@@ -60,26 +85,74 @@ export default function DashboardPage() {
         <p className="text-[var(--muted)]">در حال بارگذاری…</p>
       ) : (
         <>
+          <p className="mb-6 text-sm text-[var(--muted)]">
+            آخرین روز داده‌دار:{" "}
+            <span className="text-[var(--accent)]">{data.latestDay}</span>
+          </p>
+
           <section className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ["طرف‌حساب", data.stats.partners],
+              ["فروش روز", money(data.stats.sellAmount)],
+              ["خرید روز", money(data.stats.buyAmount)],
+              ["پلاستیک روز", money(data.stats.plasticIncome)],
               ["کشتارکن فعال", data.stats.slaughterers],
-              ["آرتیکل", data.stats.articles],
-              ["انبارها", data.stats.stores],
+              ["آرتیکل mirror", data.stats.articles],
               ["پیشنهاد باز", data.stats.pendingSuggestions],
-              ["کسری داخلی سردخانه", data.stats.coldInternalLots],
+              ["کسری سردخانه", data.stats.coldInternalLots],
               ["پرداخت معوق", data.stats.overduePayments],
             ].map(([label, value]) => (
               <div key={String(label)} className="border-t border-[var(--line)] pt-3">
                 <p className="text-sm text-[var(--muted)]">{label}</p>
-                <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
               </div>
             ))}
           </section>
 
+          <section className="mb-10">
+            <h2 className="mb-3 text-xl">حرکت انبار — {data.briefing.day}</h2>
+            {data.briefing.warehouseMovements.length ? (
+              <ul className="space-y-2 text-sm">
+                {data.briefing.warehouseMovements.map((m) => (
+                  <li key={m.product} className="border-t border-[var(--line)] pt-2">
+                    {m.product}: خرید {m.purchase} / فروش {m.sale} / مغایرت{" "}
+                    <span className="text-[var(--accent)]">{m.variance}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-sm text-[var(--muted)]">
+                برای این روز حرکت کالای نگاشت‌شده کم است. روزهای فعال:
+                <ul className="mt-2 space-y-1">
+                  {data.briefing.activityDays.map((d) => (
+                    <li key={d.day}>
+                      {d.day} — {d.count} سند
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          <section className="mb-10">
+            <h2 className="mb-3 text-xl">برترین کشتارکن‌ها</h2>
+            {data.briefing.topSlaughterers.length ? (
+              <ul className="space-y-2 text-sm">
+                {data.briefing.topSlaughterers.map((s) => (
+                  <li key={s.code} className="border-t border-[var(--line)] pt-2">
+                    {s.title} ({s.code}): {s.count} / {money(s.amount)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">
+                بعد از sync بیشتر اسناد، رتبه‌بندی پر می‌شود.
+              </p>
+            )}
+          </section>
+
           <section className="mb-8">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-xl">وضعیت همگام‌سازی انعکاس</h2>
+              <h2 className="text-xl">همگام‌سازی انعکاس</h2>
               <button
                 type="button"
                 onClick={runSync}
@@ -89,25 +162,21 @@ export default function DashboardPage() {
                 {syncing ? "در حال sync…" : "اجرای sync"}
               </button>
             </div>
-            {data.syncStates.length === 0 ? (
-              <p className="text-sm text-[var(--muted)]">هنوز sync اجرا نشده.</p>
-            ) : (
-              <ul className="space-y-3 text-sm">
-                {data.syncStates.map((s) => (
-                  <li key={s.entity} className="border-t border-[var(--line)] pt-2">
-                    <span className="text-[var(--accent)]">{s.entity}</span>
-                    {" — "}
-                    {s.recordCount} رکورد
-                    {s.lastSuccess
-                      ? ` — ${new Date(s.lastSuccess).toLocaleString("fa-IR")}`
-                      : ""}
-                    {s.lastError ? (
-                      <span className="block text-red-300">{s.lastError}</span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="space-y-3 text-sm">
+              {data.syncStates.map((s) => (
+                <li key={s.entity} className="border-t border-[var(--line)] pt-2">
+                  <span className="text-[var(--accent)]">{s.entity}</span>
+                  {" — "}
+                  {s.recordCount} رکورد
+                  {s.lastSuccess
+                    ? ` — ${new Date(s.lastSuccess).toLocaleString("fa-IR")}`
+                    : ""}
+                  {s.lastError ? (
+                    <span className="block text-red-300">{s.lastError}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           </section>
         </>
       )}

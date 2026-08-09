@@ -125,7 +125,12 @@ export class EnekasClient {
     return { ok: true as const };
   }
 
-  async sgrid(path: string, rows = 500, page = 1) {
+  async sgrid(
+    path: string,
+    rows = 500,
+    page = 1,
+    opts?: { sidx?: string; sord?: "asc" | "desc" },
+  ) {
     if (!this.csrf && this.cookies.get("csrfToken")) {
       this.csrf = this.cookies.get("csrfToken")!;
     }
@@ -133,8 +138,8 @@ export class EnekasClient {
       csrfToken: this.csrf || this.cookies.get("csrfToken") || "",
       page: String(page),
       rows: String(rows),
-      sidx: "",
-      sord: "asc",
+      sidx: opts?.sidx || "",
+      sord: opts?.sord || "asc",
     });
     const res = await this.request(path, {
       method: "POST",

@@ -146,54 +146,59 @@ export async function syncStores(client: EnekasClient) {
   });
 }
 
-export async function syncArticlesSample(client: EnekasClient, rowsLimit = 400) {
+function mapArticle(r: Record<string, unknown>) {
+  const id = String(r.id);
+  const data = {
+    invoiceId: r.invoice_id ? String(r.invoice_id) : null,
+    invoiceNumber: r.invoice_number ? String(r.invoice_number) : null,
+    invoiceDate: r.invoice_date ? String(r.invoice_date) : null,
+    invoiceType: r.invoice_type ? String(r.invoice_type) : null,
+    invoiceStatus: r.invoice_status ? String(r.invoice_status) : null,
+    accountCode: r.account_code ? String(r.account_code) : null,
+    accountTitle: r.account_title ? String(r.account_title) : null,
+    partnerId: r.partner_id ? String(r.partner_id) : null,
+    partnerCode: r.partner_code ? String(r.partner_code) : null,
+    partnerTitle: r.partner_title ? String(r.partner_title) : null,
+    description: r.description ? String(r.description) : null,
+    debit: Number(r.debit || 0),
+    credit: Number(r.credit || 0),
+    count: r.count != null && r.count !== "" ? Number(r.count) : null,
+    branchTitle: r.branch_title ? String(r.branch_title) : null,
+    raw: r as object,
+    syncedAt: new Date(),
+  };
+  return { id, data };
+}
+
+export async function syncArticlesSample(client: EnekasClient, rowsLimit = 800) {
   return mark("articles", async () => {
-    const data = await client.sgrid(
-      "/acc/articles/index/scenario/Sgrid",
-      Math.min(rowsLimit, 500),
-    );
-    const rows = (data.rows || []).slice(0, rowsLimit);
+    const pageSize = 200;
+    const pages = Math.max(1, Math.ceil(rowsLimit / pageSize));
+    const seen = new Map<string, Record<string, unknown>>();
+    for (let page = 1; page <= pages && seen.size < rowsLimit; page++) {
+      const data = await client.sgrid(
+        "/acc/articles/index/scenario/Sgrid",
+        pageSize,
+        page,
+        { sidx: "invoice_date", sord: "desc" },
+      );
+      const rows = data.rows || [];
+      if (!rows.length) break;
+      for (const r of rows) {
+        seen.set(String(r.id), r);
+        if (seen.size >= rowsLimit) break;
+      }
+      if (rows.length < pageSize) break;
+    }
+    const rows = [...seen.values()];
     await chunked(rows, 40, async (chunk) => {
       await prisma.$transaction(
         chunk.map((r) => {
-          const id = String(r.id);
+          const { id, data } = mapArticle(r);
           return prisma.enekasArticle.upsert({
             where: { id },
-            create: {
-              id,
-              invoiceId: r.invoice_id ? String(r.invoice_id) : null,
-              invoiceNumber: r.invoice_number ? String(r.invoice_number) : null,
-              invoiceDate: r.invoice_date ? String(r.invoice_date) : null,
-              invoiceType: r.invoice_type ? String(r.invoice_type) : null,
-              invoiceStatus: r.invoice_status ? String(r.invoice_status) : null,
-              accountCode: r.account_code ? String(r.account_code) : null,
-              accountTitle: r.account_title ? String(r.account_title) : null,
-              partnerId: r.partner_id ? String(r.partner_id) : null,
-              partnerCode: r.partner_code ? String(r.partner_code) : null,
-              partnerTitle: r.partner_title ? String(r.partner_title) : null,
-              description: r.description ? String(r.description) : null,
-              debit: Number(r.debit || 0),
-              credit: Number(r.credit || 0),
-              count: r.count != null && r.count !== "" ? Number(r.count) : null,
-              branchTitle: r.branch_title ? String(r.branch_title) : null,
-              raw: r as object,
-            },
-            update: {
-              invoiceId: r.invoice_id ? String(r.invoice_id) : null,
-              invoiceNumber: r.invoice_number ? String(r.invoice_number) : null,
-              invoiceDate: r.invoice_date ? String(r.invoice_date) : null,
-              invoiceType: r.invoice_type ? String(r.invoice_type) : null,
-              accountCode: r.account_code ? String(r.account_code) : null,
-              accountTitle: r.account_title ? String(r.account_title) : null,
-              partnerCode: r.partner_code ? String(r.partner_code) : null,
-              partnerTitle: r.partner_title ? String(r.partner_title) : null,
-              description: r.description ? String(r.description) : null,
-              debit: Number(r.debit || 0),
-              credit: Number(r.credit || 0),
-              count: r.count != null && r.count !== "" ? Number(r.count) : null,
-              syncedAt: new Date(),
-              raw: r as object,
-            },
+            create: { id, ...data },
+            update: data,
           });
         }),
       );
